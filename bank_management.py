@@ -2,25 +2,30 @@ import os
 
 class Account:
     def __init__(self, account_number, account_holder_name, balance=0.0):
+        # Initialize Account object with account number, account holder name, balance, and transaction history
         self.account_number = account_number
         self.account_holder_name = account_holder_name
         self.balance = balance
         self.transaction_history = []
 
     def deposit(self, amount):
+         # Perform deposit operation by updating the balance and adding the transaction to the history
         if amount > 0:
             self.balance += amount
             self.transaction_history.append(f"Deposit: {amount}")
 
     def withdraw(self, amount):
+        # Perform withdrawal operation by updating the balance and adding the transaction to the history
         if amount > 0 and amount <= self.balance:
             self.balance -= amount
             self.transaction_history.append(f"Withdrawal: {amount}")
 
     def get_account_details(self):
+        # Retrieve account details as a formatted string
         return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nBalance: {self.balance}"
 
 class Bank:
+    # Initialize Bank object with an empty list of accounts
     def __init__(self):
         self.accounts = []
 
@@ -56,6 +61,7 @@ class Bank:
         print("Account created successfully.")
 
     def perform_transaction(self, account_number, amount, transaction_type):
+         # Perform a transaction (deposit/withdrawal) on an account
         account = self.find_account(account_number)
         if account is not None:
             if transaction_type == "deposit":
@@ -64,28 +70,33 @@ class Bank:
                 account.withdraw(amount)
 
     def display_account_details(self, account_number):
+         # Display account details
         account = self.find_account(account_number)
         if account is not None:
             return account.get_account_details()
 
     def generate_reports(self):
+         # Generate reports for all accounts
         report = ""
         for account in self.accounts:
             report += account.get_account_details() + "\n"
         return report
 
     def find_account(self, account_number):
+        # Find an account by account number
         for account in self.accounts:
             if account.account_number == account_number:
                 return account
         return None
 
 def get_file_path():
+      # Get the file path of the account data file
     current_file = os.path.abspath(__file__)
     current_dir = os.path.dirname(current_file)
     return os.path.join(current_dir, "account_data.txt")
 
 def load_data_from_file():
+     # Load account data and transaction history from file
     accounts = []
     file_path = get_file_path()
     try:
@@ -104,8 +115,9 @@ def load_data_from_file():
         print("No account data file found.")
     return accounts
 
-
 def save_data_to_file(accounts):
+    # Save account data and transaction history to file
+    file_path = get_file_path()
     file_path = get_file_path()
     try:
         with open(file_path, "w") as file:
@@ -124,8 +136,8 @@ def save_data_to_file(accounts):
         os.makedirs(os.path.dirname(file_path))
         save_data_to_file(accounts)
 
-
 def display_menu():
+    # Display menu options
     print("---- Bank Management System Menu ----")
     print("1. Create an account")
     print("2. Perform a transaction")
@@ -135,6 +147,7 @@ def display_menu():
 
 
 def handle_user_input(option):
+     # Handle user input and call appropriate methods
     if option == "1":
         while True:
             account_number = input("Enter account number: ")
@@ -161,6 +174,7 @@ def handle_user_input(option):
             except ValueError:
                 print("Invalid initial balance. Initial balance should be a valid number.")
                 
+        # Create an account with the provided input values
         bank.create_account(account_number, first_name, last_name, initial_balance)
 
     elif option == "2":
@@ -175,23 +189,32 @@ def handle_user_input(option):
             except ValueError:
                 print("Invalid transaction amount. It should be a valid number.")
         transaction_type = input("Enter transaction type (deposit/withdrawal): ")
+
+        # Perform the specified transaction on the account
         bank.perform_transaction(account_number, amount, transaction_type)
+
     elif option == "3":
         account_number = input("Enter account number: ")
+
+        # Retrieve and display the account details
         account_details = bank.display_account_details(account_number)
         if account_details is not None:
             print(account_details)
         else:
             print("Account not found.")
+
     elif option == "4":
+        # Generate and display reports for all accounts
         reports = bank.generate_reports()
         print(reports)
+
     elif option == "5":
+        # Save account data and exit the program
         save_data_to_file(bank.accounts)
         exit()
+
     else:
         print("Invalid option. Please try again.")
-
 
 # Main program
 if __name__ == "__main__":
