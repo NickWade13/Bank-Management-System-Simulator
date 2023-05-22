@@ -52,28 +52,84 @@ class Bank:
         return None
 
 def load_data_from_file():
-    # Load account data and transaction history from file
-    pass
+    accounts = []
+    try:
+        with open("account_data.txt", "r") as file:
+            for line in file:
+                account_data = line.strip().split(",")
+                account_number = account_data[0]
+                account_holder_name = account_data[1]
+                balance = float(account_data[2])
+                transaction_history = account_data[3:]
+                account = Account(account_number, account_holder_name, balance)
+                account.transaction_history = transaction_history
+                accounts.append(account)
+        print("Account data loaded successfully.")
+    except FileNotFoundError:
+        print("No account data file found.")
+    return accounts
 
 
-def save_data_to_file():
-    # Save account data and transaction history to file
-    pass
+def save_data_to_file(accounts):
+    with open("account_data.txt", "w") as file:
+        for account in accounts:
+            account_data = [
+                account.account_number,
+                account.account_holder_name,
+                str(account.balance),
+            ]
+            transaction_history = ",".join(account.transaction_history)
+            account_data.append(transaction_history)
+            line = ",".join(account_data)
+            file.write(line + "\n")
+    print("Account data saved successfully.")
 
 
 def display_menu():
-    # Display menu options
-    pass
+    print("---- Bank Management System Menu ----")
+    print("1. Create an account")
+    print("2. Perform a transaction")
+    print("3. Display account details")
+    print("4. Generate reports")
+    print("5. Exit")
 
 
 def handle_user_input(option):
-    # Handle user input and call appropriate methods
-    pass
+    if option == "1":
+        account_number = input("Enter account number: ")
+        account_holder_name = input("Enter account holder name: ")
+        initial_balance = float(input("Enter initial balance: "))
+        bank.create_account(account_number, account_holder_name, initial_balance)
+        print("Account created successfully.")
+    elif option == "2":
+        account_number = input("Enter account number: ")
+        amount = float(input("Enter transaction amount: "))
+        transaction_type = input("Enter transaction type (deposit/withdrawal): ")
+        bank.perform_transaction(account_number, amount, transaction_type)
+    elif option == "3":
+        account_number = input("Enter account number: ")
+        account_details = bank.display_account_details(account_number)
+        if account_details is not None:
+            print(account_details)
+        else:
+            print("Account not found.")
+    elif option == "4":
+        reports = bank.generate_reports()
+        print(reports)
+    elif option == "5":
+        save_data_to_file(bank.accounts)
+        exit()
+    else:
+        print("Invalid option. Please try again.")
 
 
 # Main program
 if __name__ == "__main__":
-    # Load data from file
-    # Display menu
-    # Handle user input
-    # Save data to file
+    bank = Bank()
+    accounts = load_data_from_file()
+    bank.accounts = accounts
+
+    while True:
+        display_menu()
+        user_option = input("Enter your choice (1-5): ")
+        handle_user_input(user_option)
