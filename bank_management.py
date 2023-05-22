@@ -181,18 +181,28 @@ def handle_user_input(option):
     elif option == "2":
         account_number = input("Enter account number: ")
         while True:
-            try:
-                amount = float(input("Enter transaction amount: "))
-                if amount > 0:
-                    break
-                else:
-                    print("Invalid transaction amount. It should be a positive number.")
-            except ValueError:
-                print("Invalid transaction amount. It should be a valid number.")
-        transaction_type = input("Enter transaction type (deposit/withdrawal): ")
+            # Prompt the user to enter a valid transaction type (deposit/withdrawal)
+            transaction_type = input("Enter transaction type (deposit/withdrawal): ").lower()
+            if transaction_type in ["deposit", "withdrawal"]:
+                break
+            else:
+                print("Invalid transaction type. Please enter either 'deposit' or 'withdrawal'.")
 
-        # Perform the specified transaction on the account
-        bank.perform_transaction(account_number, amount, transaction_type)
+        amount = float(input("Enter transaction amount: "))
+
+        # Perform the transaction based on the transaction type
+        account = bank.find_account(account_number)
+        if account is not None:
+            if transaction_type == "deposit":
+                account.deposit(amount)
+                # Print success message for deposit
+                print(f"Success! £{amount:,.2f} deposited to: Account Name: {account.account_holder_name} --- Account Number: {account_number}")
+            elif transaction_type == "withdrawal":
+                account.withdraw(amount)
+                # Print success message for withdrawal
+                print(f"Success! £{amount:,.2f} withdrawn from: Account Name: {account.account_holder_name} --- Account Number: {account_number}")
+        else:
+            print("Account not found.")
 
     elif option == "3":
         account_number = input("Enter account number: ")
