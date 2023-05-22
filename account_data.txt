@@ -1,2 +1,2 @@
-00000001,Nicholas Wade,1008000.0,,Deposit: 15000.0,Withdrawal: 7000.0
+00000001,Nicholas Wade,1000000.0,
 00000002,Vena Clark,10000000.0,
