@@ -1,3 +1,5 @@
+import os
+
 class Account:
     def __init__(self, account_number, account_holder_name, balance=0.0):
         self.account_number = account_number
@@ -22,9 +24,36 @@ class Bank:
     def __init__(self):
         self.accounts = []
 
-    def create_account(self, account_number, account_holder_name, initial_balance):
+    def create_account(self, account_number, first_name, last_name, initial_balance):
+        # Check if account number is valid
+        if not account_number.isdigit() or len(account_number) != 8:
+            print("Invalid account number. Account number should be 8 digits.")
+            return
+
+        # Check if first name and last name are provided
+        if not first_name.strip() or not last_name.strip():
+            print("Invalid name. First name and last name cannot be empty.")
+            return
+
+        # Check if initial balance is a positive number
+        try:
+            initial_balance = float(initial_balance)
+            if initial_balance < 0:
+                print("Invalid initial balance. Initial balance should be a non-negative number.")
+                return
+        except ValueError:
+            print("Invalid initial balance. Initial balance should be a valid number.")
+            return
+
+        # Store initial balance with two decimal places
+        initial_balance = round(initial_balance, 2)
+
+        # Create the account
+        account_holder_name = f"{first_name} {last_name}"
         account = Account(account_number, account_holder_name, initial_balance)
         self.accounts.append(account)
+
+        print("Account created successfully.")
 
     def perform_transaction(self, account_number, amount, transaction_type):
         account = self.find_account(account_number)
@@ -51,10 +80,16 @@ class Bank:
                 return account
         return None
 
+def get_file_path():
+    current_file = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file)
+    return os.path.join(current_dir, "account_data.txt")
+
 def load_data_from_file():
     accounts = []
+    file_path = get_file_path()
     try:
-        with open("account_data.txt", "r") as file:
+        with open(file_path, "r") as file:
             for line in file:
                 account_data = line.strip().split(",")
                 account_number = account_data[0]
@@ -71,18 +106,23 @@ def load_data_from_file():
 
 
 def save_data_to_file(accounts):
-    with open("account_data.txt", "w") as file:
-        for account in accounts:
-            account_data = [
-                account.account_number,
-                account.account_holder_name,
-                str(account.balance),
-            ]
-            transaction_history = ",".join(account.transaction_history)
-            account_data.append(transaction_history)
-            line = ",".join(account_data)
-            file.write(line + "\n")
-    print("Account data saved successfully.")
+    file_path = get_file_path()
+    try:
+        with open(file_path, "w") as file:
+            for account in accounts:
+                account_data = [
+                    account.account_number,
+                    account.account_holder_name,
+                    str(account.balance),
+                ]
+                transaction_history = ",".join(account.transaction_history)
+                account_data.append(transaction_history)
+                line = ",".join(account_data)
+                file.write(line + "\n")
+        print("Account data saved successfully.")
+    except FileNotFoundError:
+        os.makedirs(os.path.dirname(file_path))
+        save_data_to_file(accounts)
 
 
 def display_menu():
@@ -96,14 +136,44 @@ def display_menu():
 
 def handle_user_input(option):
     if option == "1":
-        account_number = input("Enter account number: ")
-        account_holder_name = input("Enter account holder name: ")
-        initial_balance = float(input("Enter initial balance: "))
-        bank.create_account(account_number, account_holder_name, initial_balance)
-        print("Account created successfully.")
+        while True:
+            account_number = input("Enter account number: ")
+            if account_number.isdigit() and len(account_number) == 8:
+                break
+            else:
+                print("Invalid account number. Account number should be 8 digits.")
+        
+        while True:
+            first_name = input("Enter first name: ")
+            last_name = input("Enter last name: ")
+            if first_name.strip() and last_name.strip():
+                break
+            else:
+                print("Invalid name. First name and last name cannot be empty.")
+        
+        while True:
+            try:
+                initial_balance = float(input("Enter initial balance: "))
+                if initial_balance >= 0:
+                    break
+                else:
+                    print("Invalid initial balance. Initial balance should be a non-negative number.")
+            except ValueError:
+                print("Invalid initial balance. Initial balance should be a valid number.")
+                
+        bank.create_account(account_number, first_name, last_name, initial_balance)
+
     elif option == "2":
         account_number = input("Enter account number: ")
-        amount = float(input("Enter transaction amount: "))
+        while True:
+            try:
+                amount = float(input("Enter transaction amount: "))
+                if amount > 0:
+                    break
+                else:
+                    print("Invalid transaction amount. It should be a positive number.")
+            except ValueError:
+                print("Invalid transaction amount. It should be a valid number.")
         transaction_type = input("Enter transaction type (deposit/withdrawal): ")
         bank.perform_transaction(account_number, amount, transaction_type)
     elif option == "3":
