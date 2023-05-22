@@ -21,8 +21,9 @@ class Account:
             self.transaction_history.append(f"Withdrawal: {amount}")
 
     def get_account_details(self):
-        # Retrieve account details as a formatted string
-        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nBalance: {self.balance}"
+        # Format the balance with a pound sign (£) and comma separators for thousands within the f-string
+        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nBalance: £{self.balance:,.2f}"
+
 
 class Bank:
     # Initialize Bank object with an empty list of accounts
