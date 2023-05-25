@@ -1,29 +1,29 @@
 import os
 
 class Account:
-    def __init__(self, account_number, account_holder_name, balance=0.0):
-        # Initialize Account object with account number, account holder name, balance, and transaction history
+    def __init__(self, account_number, account_holder_name, initial_funds):
+        # Initialize Account object with account number, account holder name, initial funds and transaction history
         self.account_number = account_number
         self.account_holder_name = account_holder_name
-        self.balance = balance
+        self.initial_funds = initial_funds
+        self.current_funds = initial_funds
         self.transaction_history = []
 
     def deposit(self, amount):
-         # Perform deposit operation by updating the balance and adding the transaction to the history
+        # Perform deposit operation by updating the balance and adding the transaction to the history
         if amount > 0:
-            self.balance += amount
+            self.current_funds += amount
             self.transaction_history.append(f"Deposit: {amount}")
-
+    
     def withdraw(self, amount):
         # Perform withdrawal operation by updating the balance and adding the transaction to the history
-        if amount > 0 and amount <= self.balance:
-            self.balance -= amount
+        if amount > 0 and amount <= self.current_funds:
+            self.current_funds -= amount
             self.transaction_history.append(f"Withdrawal: {amount}")
 
     def get_account_details(self):
         # Format the balance with a pound sign (£) and comma separators for thousands within the f-string
-        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nBalance: £{self.balance:,.2f}"
-
+        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nInitial Funds: £{self.initial_funds:,.2f}\nCurrent Funds: £{self.current_funds:,.2f}\nTotal Deposited: £{sum(d for d in self.transaction_history if d.startswith('Deposit')):,.2f}\nTotal Withdrawn: £{sum(w for w in self.transaction_history if w.startswith('Withdrawal')):,.2f}"
 
 class Bank:
     # Initialize Bank object with an empty list of accounts
@@ -119,19 +119,16 @@ def load_data_from_file():
 def save_data_to_file(accounts):
     # Save account data and transaction history to file
     file_path = get_file_path()
-    file_path = get_file_path()
     try:
         with open(file_path, "w") as file:
             for account in accounts:
                 account_data = [
                     account.account_number,
                     account.account_holder_name,
-                    str(account.balance),
+                    str(account.balance)
                 ]
                 transaction_history = ",".join(account.transaction_history)
-                account_data.append(transaction_history)
-                line = ",".join(account_data)
-                file.write(line + "\n")
+                file.write(",".join(account_data + [transaction_history]) + "\n")
         print("Account data saved successfully.")
     except FileNotFoundError:
         os.makedirs(os.path.dirname(file_path))
