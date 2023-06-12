@@ -2,6 +2,16 @@ from datetime import datetime
 import os
 import re
 
+def is_valid_account_number(account_number):
+    return account_number.isdigit() and len(account_number) == 8
+
+def is_valid_transaction_amount(amount):
+    try:
+        amount = float(amount)
+        return amount > 0
+    except ValueError:
+        return False
+
 class Account:
     def __init__(self, account_number, account_holder_name, initial_funds):
         # Initialize Account object with account number, account holder name, initial funds and transaction history
@@ -49,34 +59,10 @@ class Bank:
         self.accounts = []
 
     def create_account(self, account_number, first_name, last_name, initial_balance):
-        # Check if account number is valid
-        if not account_number.isdigit() or len(account_number) != 8:
-            print("Invalid account number. Account number should be 8 digits.")
-            return
-
-        # Check if first name and last name are provided
-        if not first_name.strip() or not last_name.strip():
-            print("Invalid name. First name and last name cannot be empty.")
-            return
-
-        # Check if initial balance is a positive number
-        try:
-            initial_balance = float(initial_balance)
-            if initial_balance < 0:
-                print("Invalid initial balance. Initial balance should be a non-negative number.")
-                return
-        except ValueError:
-            print("Invalid initial balance. Initial balance should be a valid number.")
-            return
-
-        # Store initial balance with two decimal places
-        initial_balance = round(initial_balance, 2)
-
-        # Create the account
+        initial_balance = round(float(initial_balance), 2)
         account_holder_name = f"{first_name} {last_name}"
         account = Account(account_number, account_holder_name, initial_balance)
         self.accounts.append(account)
-
         print("Account created successfully.")
 
     def perform_transaction(self, account_number, amount, transaction_type):
@@ -181,20 +167,30 @@ def display_menu():
 def handle_user_input(option):
     # Handle user input and call appropriate methods
     if option == "1":
+        account_number = input("Enter account number: ")
         while True:
-            account_number = input("Enter account number: ")
-            if account_number.isdigit() and len(account_number) == 8:
-                break
-            else:
+            if not is_valid_account_number(account_number):
                 print("Invalid account number. Account number should be 8 digits.")
+                account_number = input("Enter account number: ")
+                continue
 
-        while True:
+            if bank.find_account(account_number) is not None:
+                print("Account number already exists. Please choose a different account number.")
+                account_number = input("Enter account number: ")
+                continue
+            break
+
+        first_name = ""
+        while not first_name.strip():
             first_name = input("Enter first name: ")
+            if not first_name.strip():
+                print("First name cannot be empty.")
+
+        last_name = ""
+        while not last_name.strip():
             last_name = input("Enter last name: ")
-            if first_name.strip() and last_name.strip():
-                break
-            else:
-                print("Invalid name. First name and last name cannot be empty.")
+            if not last_name.strip():
+                print("Last name cannot be empty.")
 
         while True:
             try:
@@ -202,7 +198,7 @@ def handle_user_input(option):
                 if initial_balance >= 0:
                     break
                 else:
-                    print("Invalid initial balance. Initial balance should be a non-negative number.")
+                    print("Invalid initial balance. Initial balance should be a positive number.")
             except ValueError:
                 print("Invalid initial balance. Initial balance should be a valid number.")
 
@@ -210,28 +206,26 @@ def handle_user_input(option):
         bank.create_account(account_number, first_name, last_name, initial_balance)
 
     elif option == "2":
-        while True:
+        account_number = input("Enter account number: ")
+        while not is_valid_account_number(account_number):
+            print("Invalid account number. Account number should be 8 digits.")
             account_number = input("Enter account number: ")
-            if account_number.isdigit() and len(account_number) == 8:
-                account = bank.find_account(account_number)
-                if account is not None:
-                    break
-                else:
-                    print("Account not found. Please enter a valid account number.")
-            else:
-                print("Invalid account number. Account number should be 8 digits.")
 
-        while True:
+        account = bank.find_account(account_number)
+        while account is None:
+            print("Account not found. Please enter a valid account number.")
+            account_number = input("Enter account number: ")
+            account = bank.find_account(account_number)
+
+        transaction_type = input("Enter transaction type (deposit/withdrawal): ").lower()
+        while transaction_type not in ["deposit", "withdrawal"]:
+            print("Invalid transaction type. Please enter either 'deposit' or 'withdrawal'.")
             transaction_type = input("Enter transaction type (deposit/withdrawal): ").lower()
-            if transaction_type in ["deposit", "withdrawal"]:
-                break
-            else:
-                print("Invalid transaction type. Please enter either 'deposit' or 'withdrawal'.")
 
         while True:
             try:
                 amount = float(input("Enter transaction amount: "))
-                if amount > 0:
+                if is_valid_transaction_amount(amount):
                     # Limit the number of decimal places to 2
                     amount = round(amount, 2)
                     break
@@ -240,24 +234,19 @@ def handle_user_input(option):
             except ValueError:
                 print("Invalid amount. Amount should be a valid number.")
 
-        # Perform the transaction based on the transaction type
-        account = bank.find_account(account_number)
-        if account is not None:
-            if transaction_type == "deposit":
-                account.deposit(amount)
-                print(f"Success! £{amount:,.2f} deposited to --- Account Name: {account.account_holder_name} --- Account Number: {account_number}")
-            elif transaction_type == "withdrawal":
-                if amount <= account.current_funds:
-                    account.withdraw(amount)
-                    print(f"Success! £{amount:,.2f} withdrawn from: Account Name: {account.account_holder_name} --- Account Number: {account_number}")
-                else:
-                    print("Insufficient funds. Withdrawal amount exceeds the current balance.")
-            
-            # Display updated account details
-            account_details = bank.display_account_details(account_number)
-            print(account_details)
-        else:
-            print("Account not found.")
+        if transaction_type == "deposit":
+            account.deposit(amount)
+            print(f"Success! £{amount:,.2f} deposited to: ")
+        elif transaction_type == "withdrawal":
+            if amount <= account.current_funds:
+                account.withdraw(amount)
+                print(f"Success! £{amount:,.2f} withdrawn from: ")
+            else:
+                print("Insufficient funds. Withdrawal amount exceeds the current balance.")
+
+        # Display updated account details
+        account_details = bank.display_account_details(account_number)
+        print(account_details)
 
     elif option == "3":
         account_number = input("Enter account number: ")
