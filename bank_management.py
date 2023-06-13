@@ -184,10 +184,11 @@ def display_menu():
     print("---- Bank Management System Menu ----")
     print("1. Create an account")
     print("2. Perform a transaction")
-    print("3. Display account details")
-    print("4. Display transaction history")
-    print("5. Generate reports")
-    print("6. Exit")
+    print("3. Transfer funds between accounts")
+    print("4. Display account details")
+    print("5. Display transaction history")
+    print("6. Generate reports")
+    print("7. Exit")
 
 def handle_user_input(option):
     # Handle user input and call appropriate methods
@@ -276,7 +277,56 @@ def handle_user_input(option):
             else:
                 print("Insufficient funds. Withdrawal amount exceeds the current balance.")
 
-    elif user_option == "3":
+    elif option == "3":
+        while True:
+            sender_account_number = input("Enter sender account number: ")
+            if is_valid_account_number(sender_account_number):
+                sender_account = bank.find_account(sender_account_number)
+                if sender_account is not None:
+                    break
+                else:
+                    print("Sender account not found. Please enter a valid account number.")
+            else:
+                print("Invalid account number. Please try again.")
+
+        while True:
+            recipient_account_number = input("Enter recipient account number: ")
+            if is_valid_account_number(recipient_account_number):
+                recipient_account = bank.find_account(recipient_account_number)
+                if recipient_account is not None:
+                    break
+                else:
+                    print("Recipient account not found. Please enter a valid account number.")
+            else:
+                print("Invalid account number. Please try again.")
+
+        while True:
+            while True:
+                try:
+                    amount = float(input("Enter transfer amount: "))
+                    if is_valid_transaction_amount(amount):
+                        # Limit the number of decimal places to 2
+                        amount = round(amount, 2)
+                        break
+                    else:
+                        print("Invalid amount. Amount should be a positive number.")
+                except ValueError:
+                    print("Invalid amount. Amount should be a valid number.")
+
+            if amount <= sender_account.current_funds:
+                sender_account.withdraw(amount)
+                recipient_account.deposit(amount)
+                print(f"Success! £{amount:,.2f} transferred from:")
+                print(f"Sender Account Number: {sender_account.account_number}")
+                print(f"Sender Account Holder: {sender_account.account_holder_name}")
+                print(f"To:")
+                print(f"Recipient Account Number: {recipient_account.account_number}")
+                print(f"Recipient Account Holder: {recipient_account.account_holder_name}")
+                break
+            else:
+                print("Insufficient funds. Transfer amount exceeds the current balance of the sender account.")
+
+    elif user_option == "4":
         while True:
             account_number = input("Enter account number: ")
             if is_valid_account_number(account_number):
@@ -286,7 +336,7 @@ def handle_user_input(option):
             else:
                 print("Invalid account number. Please try again.")
 
-    elif option == "4":
+    elif option == "5":
         while True:
             account_number = input("Enter account number: ")
             if is_valid_account_number(account_number):
@@ -301,12 +351,12 @@ def handle_user_input(option):
             else:
                 print("Invalid account number. Please try again.")
 
-    elif option == "5":
+    elif option == "6":
         # Generate and display reports for all accounts
         reports = bank.generate_reports()
         print(reports)
 
-    elif option == "6":
+    elif option == "7":
         # Save account data and transaction history to files and exit the program
         save_data_to_file(bank.accounts, get_file_path("account_data.txt"))
         exit()
@@ -323,5 +373,5 @@ if __name__ == "__main__":
 
     while True:
         display_menu()
-        user_option = input("Enter your choice (1-6): ")
+        user_option = input("Enter your choice (1-7): ")
         handle_user_input(user_option)
