@@ -185,8 +185,9 @@ def display_menu():
     print("1. Create an account")
     print("2. Perform a transaction")
     print("3. Display account details")
-    print("4. Generate reports")
-    print("5. Exit")
+    print("4. Display transaction history")
+    print("5. Generate reports")
+    print("6. Exit")
 
 def handle_user_input(option):
     # Handle user input and call appropriate methods
@@ -286,11 +287,26 @@ def handle_user_input(option):
                 print("Invalid account number. Please try again.")
 
     elif option == "4":
+        while True:
+            account_number = input("Enter account number: ")
+            if is_valid_account_number(account_number):
+                account = bank.find_account(account_number)
+                if account is not None:
+                    print("\nTransaction History:")
+                    for transaction in account.transaction_history:
+                        print(transaction)
+                    break
+                else:
+                    print("Account not found. Please enter a valid account number.")
+            else:
+                print("Invalid account number. Please try again.")
+
+    elif option == "5":
         # Generate and display reports for all accounts
         reports = bank.generate_reports()
         print(reports)
 
-    elif option == "5":
+    elif option == "6":
         # Save account data and transaction history to files and exit the program
         save_data_to_file(bank.accounts, get_file_path("account_data.txt"))
         exit()
@@ -307,5 +323,5 @@ if __name__ == "__main__":
 
     while True:
         display_menu()
-        user_option = input("Enter your choice (1-5): ")
+        user_option = input("Enter your choice (1-6): ")
         handle_user_input(user_option)
