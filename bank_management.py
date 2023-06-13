@@ -140,7 +140,7 @@ def load_data_from_file(file_path):
 
                     # Update current_funds based on transaction history
                     for transaction in account.transaction_history:
-                        match = re.search(r"£([\d,]+\.\d+)", transaction)
+                        match = re.search(r"{0}([\d,]+\.\d+)".format(locale.localeconv()['currency_symbol']), transaction)
                         if match:
                             amount = float(match.group(1).replace(",", ""))
                             if transaction.startswith('Deposit'):
@@ -174,7 +174,6 @@ def save_data_to_file(accounts, file_path):
         # Save transaction history for each account
         for account in accounts:
             account.save_transaction_history()
-        
         print("Account data and transaction history saved successfully.")
     except IOError:
         print("Error saving account data.")
@@ -262,18 +261,18 @@ def handle_user_input(option):
 
         if transaction_type == "deposit":
             account.deposit(amount)
-            print(f"Success! £{amount:,.2f} deposited to:")
+            print(f"Success! {locale.currency(amount, grouping=True, symbol=True)} deposited to:")
             print(f"Account Number: {account.account_number}")
             print(f"Account Holder: {account.account_holder_name}")
-            print(f"Current Funds: £{account.current_funds:,.2f}")
+            print(f"Current Funds: {locale.currency(account.current_funds, grouping=True, symbol=True)}")
 
         elif transaction_type == "withdrawal":
             if amount <= account.current_funds:
                 account.withdraw(amount)
-                print(f"Success! £{amount:,.2f} withdrawn from:")
+                print(f"Success! {locale.currency(amount, grouping=True, symbol=True)} withdrawn from:")
                 print(f"Account Number: {account.account_number}")
                 print(f"Account Holder: {account.account_holder_name}")
-                print(f"Current Funds: £{account.current_funds:,.2f}")
+                print(f"Current Funds: {locale.currency(account.current_funds, grouping=True, symbol=True)}")
             else:
                 print("Insufficient funds. Withdrawal amount exceeds the current balance.")
 
@@ -316,7 +315,7 @@ def handle_user_input(option):
             if amount <= sender_account.current_funds:
                 sender_account.withdraw(amount)
                 recipient_account.deposit(amount)
-                print(f"Success! £{amount:,.2f} transferred from:")
+                print(f"Success! {locale.currency(amount, grouping=True, symbol=True)} transferred from:")
                 print(f"Sender Account Number: {sender_account.account_number}")
                 print(f"Sender Account Holder: {sender_account.account_holder_name}")
                 print(f"To:")
