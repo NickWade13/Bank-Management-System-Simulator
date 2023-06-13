@@ -64,8 +64,11 @@ class Account:
             with open(file_path, "w") as file:
                 file.write("\n".join(self.transaction_history))
             return True
-        except IOError:
-            print("Error saving transaction history.")
+        except FileNotFoundError:
+            print("File not found while saving transaction history.")
+            return False
+        except PermissionError:
+            print("Permission denied while saving transaction history.")
             return False
 
 class Bank:
@@ -130,7 +133,7 @@ def load_data_from_file(file_path):
 
                 # Load transaction history for the account
                 transaction_file_path = get_file_path(f"{account_number}_transaction_history.txt", "Transaction History")
-                if os.path.exists(transaction_file_path):
+                try:
                     with open(transaction_file_path, "r") as transaction_file:
                         transaction_history = transaction_file.readlines()
                         account.transaction_history = [transaction.strip() for transaction in transaction_history]
@@ -144,10 +147,16 @@ def load_data_from_file(file_path):
                                 account.current_funds += amount
                             elif transaction.startswith('Withdrawal'):
                                 account.current_funds -= amount
+                except FileNotFoundError:
+                    print(f"Transaction history file not found for account {account_number}.")
+                except PermissionError:
+                    print(f"Permission denied while loading transaction history for account {account_number}.")
 
         print("Account data loaded successfully.")
     except FileNotFoundError:
         print("No account data file found.")
+    except PermissionError:
+        print("Permission denied while loading account data.")
     return accounts
 
 def save_data_to_file(accounts, file_path):
@@ -266,7 +275,7 @@ def handle_user_input(option):
             else:
                 print("Insufficient funds. Withdrawal amount exceeds the current balance.")
 
-    elif user_option == 3:
+    elif user_option == "3":
         while True:
             account_number = input("Enter account number: ")
             if is_valid_account_number(account_number):
