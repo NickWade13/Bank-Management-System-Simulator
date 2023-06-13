@@ -1,6 +1,10 @@
 from datetime import datetime
+import locale
 import os
 import re
+
+# Set the locale to the user's default locale
+locale.setlocale(locale.LC_ALL, '')
 
 def is_valid_account_number(account_number):
     return account_number.isdigit() and len(account_number) == 8
@@ -14,31 +18,42 @@ def is_valid_transaction_amount(amount):
 
 class Account:
     def __init__(self, account_number, account_holder_name, initial_funds):
-        # Initialize Account object with account number, account holder name, initial funds and transaction history
+        # Initialize Account object with account number, account holder name, initial funds and transaction histor
         self.account_number = account_number
         self.account_holder_name = account_holder_name
         self.initial_funds = initial_funds
         self.current_funds = initial_funds
         self.transaction_history = []
+        # Format the initial funds using the user's locale
+        self.initial_funds_formatted = locale.currency(self.initial_funds, grouping=True, symbol=True)
 
     def deposit(self, amount):
-        if amount > 0:
+        if is_valid_transaction_amount(amount):
             self.current_funds += amount
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.transaction_history.append(f"Deposit: £{amount:,.2f} -- {timestamp} -- Current funds: £{self.current_funds:,.2f}")
+            deposit_amount_formatted = locale.currency(amount, grouping=True, symbol=True)
+            current_funds_formatted = locale.currency(self.current_funds, grouping=True, symbol=True)
+            self.transaction_history.append(
+                f"Deposit: {deposit_amount_formatted} -- {timestamp} -- Current funds: {current_funds_formatted}")
 
     def withdraw(self, amount):
-        if amount > 0 and amount <= self.current_funds:
+        if is_valid_transaction_amount(amount) and amount <= self.current_funds:
             self.current_funds -= amount
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.transaction_history.append(f"Withdrawal: £{amount:,.2f} -- {timestamp} -- Current funds: £{self.current_funds:,.2f}")
+            withdrawal_amount_formatted = locale.currency(amount, grouping=True, symbol=True)
+            current_funds_formatted = locale.currency(self.current_funds, grouping=True, symbol=True)
+            self.transaction_history.append(
+                f"Withdrawal: {withdrawal_amount_formatted} -- {timestamp} -- Current funds: {current_funds_formatted}")
 
     def get_account_details(self):
-        # Format the balance with a pound sign (£) and comma separators for thousands within the f-string
-        total_deposited = sum(float(d.split(': ')[1].split(' -- ')[0].replace('£', '').replace(',', '')) for d in self.transaction_history if d.startswith('Deposit'))
-        total_withdrawn = sum(float(w.split(': ')[1].split(' -- ')[0].replace('£', '').replace(',', '')) for w in self.transaction_history if w.startswith('Withdrawal'))
-
-        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nInitial Funds: £{self.initial_funds:,.2f}\nCurrent Funds: £{self.current_funds:,.2f}\nTotal Deposited: £{total_deposited:,.2f}\nTotal Withdrawn: £{total_withdrawn:,.2f}"
+        currency_symbol = locale.localeconv()['currency_symbol']
+        total_deposited = sum(
+            float(d.split(': ')[1].split(' -- ')[0].replace(currency_symbol, '').replace(',', ''))
+            for d in self.transaction_history if d.startswith('Deposit'))
+        total_withdrawn = sum(
+            float(w.split(': ')[1].split(' -- ')[0].replace(currency_symbol, '').replace(',', ''))
+            for w in self.transaction_history if w.startswith('Withdrawal'))
+        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nInitial Funds: {self.initial_funds_formatted}\nCurrent Funds: {locale.currency(self.current_funds, grouping=True, symbol=True)}\nTotal Deposited: {locale.currency(total_deposited, grouping=True, symbol=True)}\nTotal Withdrawn: {locale.currency(total_withdrawn, grouping=True, symbol=True)}"
 
     def save_transaction_history(self):
         # Save transaction history to a text file
@@ -236,27 +251,30 @@ def handle_user_input(option):
 
         if transaction_type == "deposit":
             account.deposit(amount)
-            print(f"Success! £{amount:,.2f} deposited to: ")
+            print(f"Success! £{amount:,.2f} deposited to:")
+            print(f"Account Number: {account.account_number}")
+            print(f"Account Holder: {account.account_holder_name}")
+            print(f"Current Funds: £{account.current_funds:,.2f}")
+
         elif transaction_type == "withdrawal":
             if amount <= account.current_funds:
                 account.withdraw(amount)
-                print(f"Success! £{amount:,.2f} withdrawn from: ")
+                print(f"Success! £{amount:,.2f} withdrawn from:")
+                print(f"Account Number: {account.account_number}")
+                print(f"Account Holder: {account.account_holder_name}")
+                print(f"Current Funds: £{account.current_funds:,.2f}")
             else:
                 print("Insufficient funds. Withdrawal amount exceeds the current balance.")
 
-        # Display updated account details
-        account_details = bank.display_account_details(account_number)
-        print(account_details)
-
-    elif option == "3":
-        account_number = input("Enter account number: ")
-
-        # Retrieve and display the account details
-        account_details = bank.display_account_details(account_number)
-        if account_details is not None:
-            print(account_details)
-        else:
-            print("Account not found.")
+    elif user_option == 3:
+        while True:
+            account_number = input("Enter account number: ")
+            if is_valid_account_number(account_number):
+                account_details = bank.display_account_details(account_number)
+                print(account_details)
+                break
+            else:
+                print("Invalid account number. Please try again.")
 
     elif option == "4":
         # Generate and display reports for all accounts
