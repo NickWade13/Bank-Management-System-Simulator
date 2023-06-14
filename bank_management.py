@@ -47,13 +47,27 @@ class Account:
 
     def get_account_details(self):
         currency_symbol = locale.localeconv()['currency_symbol']
-        total_deposited = sum(
-            float(d.split(': ')[1].split(' -- ')[0].replace(currency_symbol, '').replace(',', ''))
-            for d in self.transaction_history if d.startswith('Deposit'))
-        total_withdrawn = sum(
-            float(w.split(': ')[1].split(' -- ')[0].replace(currency_symbol, '').replace(',', ''))
-            for w in self.transaction_history if w.startswith('Withdrawal'))
-        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nInitial Funds: {self.initial_funds_formatted}\nCurrent Funds: {locale.currency(self.current_funds, grouping=True, symbol=True)}\nTotal Deposited: {locale.currency(total_deposited, grouping=True, symbol=True)}\nTotal Withdrawn: {locale.currency(total_withdrawn, grouping=True, symbol=True)}"
+        total_deposited = 0.0
+        total_withdrawn = 0.0
+
+        for transaction in self.transaction_history:
+            if transaction.startswith('Deposit'):
+                match = re.search(r"{0}([\d,]+\.\d+)".format(currency_symbol), transaction)
+                if match:
+                    amount = float(match.group(1).replace(",", ""))
+                    total_deposited += amount
+            elif transaction.startswith('Withdrawal'):
+                match = re.search(r"{0}([\d,]+\.\d+)".format(currency_symbol), transaction)
+                if match:
+                    amount = float(match.group(1).replace(",", ""))
+                    total_withdrawn += amount
+
+        initial_funds_formatted = locale.currency(self.initial_funds, grouping=True, symbol=True)
+        current_funds_formatted = locale.currency(self.current_funds, grouping=True, symbol=True)
+        total_deposited_formatted = locale.currency(total_deposited, grouping=True, symbol=True)
+        total_withdrawn_formatted = locale.currency(total_withdrawn, grouping=True, symbol=True)
+
+        return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nInitial Funds: {initial_funds_formatted}\nCurrent Funds: {current_funds_formatted}\nTotal Deposited: {total_deposited_formatted}\nTotal Withdrawn: {total_withdrawn_formatted}"
 
     def save_transaction_history(self):
         # Save transaction history to a text file
