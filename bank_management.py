@@ -7,9 +7,11 @@ import re
 locale.setlocale(locale.LC_ALL, '')
 
 def is_valid_account_number(account_number):
+    # Check if the account number is valid (consists of 8 digits)
     return account_number.isdigit() and len(account_number) == 8
 
 def is_valid_transaction_amount(amount):
+    # Check if the transaction amount is valid (a positive number)
     try:
         amount = float(amount)
         return amount > 0
@@ -28,6 +30,7 @@ class Account:
         self.initial_funds_formatted = locale.currency(self.initial_funds, grouping=True, symbol=True)
 
     def deposit(self, amount):
+        # Deposit the specified amount into the account
         if is_valid_transaction_amount(amount):
             self.current_funds += amount
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -37,6 +40,7 @@ class Account:
                 f"Deposit: {deposit_amount_formatted} -- {timestamp} -- Current funds: {current_funds_formatted}")
 
     def withdraw(self, amount):
+        # Withdraw the specified amount from the account if sufficient funds are available
         if is_valid_transaction_amount(amount) and amount <= self.current_funds:
             self.current_funds -= amount
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -46,35 +50,47 @@ class Account:
                 f"Withdrawal: {withdrawal_amount_formatted} -- {timestamp} -- Current funds: {current_funds_formatted}")
 
     def get_account_details(self):
-        currency_symbol = locale.localeconv()['currency_symbol']
+        # Get a formatted string with account details including initial funds, current funds, total deposited, and total withdrawn
+        currency_symbol = locale.localeconv()['currency_symbol']  # Get the currency symbol based on the user's locale
+        
+        # Initialize variables to store the total deposited and total withdrawn amounts
         total_deposited = 0.0
         total_withdrawn = 0.0
 
+        # Iterate through the transaction history
         for transaction in self.transaction_history:
             if transaction.startswith('Deposit'):
+                # If the transaction is a deposit, extract the deposited amount and add it to the total deposited
                 match = re.search(r"{0}([\d,]+\.\d+)".format(currency_symbol), transaction)
                 if match:
                     amount = float(match.group(1).replace(",", ""))
                     total_deposited += amount
             elif transaction.startswith('Withdrawal'):
+                # If the transaction is a withdrawal, extract the withdrawn amount and add it to the total withdrawn
                 match = re.search(r"{0}([\d,]+\.\d+)".format(currency_symbol), transaction)
                 if match:
                     amount = float(match.group(1).replace(",", ""))
                     total_withdrawn += amount
 
+        # Format the initial funds, current funds, total deposited, and total withdrawn using the user's locale
         initial_funds_formatted = locale.currency(self.initial_funds, grouping=True, symbol=True)
         current_funds_formatted = locale.currency(self.current_funds, grouping=True, symbol=True)
         total_deposited_formatted = locale.currency(total_deposited, grouping=True, symbol=True)
         total_withdrawn_formatted = locale.currency(total_withdrawn, grouping=True, symbol=True)
 
+        # Return a formatted string with the account details
         return f"Account Number: {self.account_number}\nAccount Holder: {self.account_holder_name}\nInitial Funds: {initial_funds_formatted}\nCurrent Funds: {current_funds_formatted}\nTotal Deposited: {total_deposited_formatted}\nTotal Withdrawn: {total_withdrawn_formatted}"
 
     def save_transaction_history(self):
         # Save transaction history to a text file
-        folder = "Transaction History"
+        folder = "Transaction History"  # Specify the folder to save the transaction history files
+        
+        # Generate the file path for the current account's transaction history file
         file_path = get_file_path(f"{self.account_number}_transaction_history.txt", folder)
         try:
+            # Create the folder if it doesn't exist
             os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Create the folder if it doesn't exist
+            # Write the transaction history to the file
             with open(file_path, "w") as file:
                 file.write("\n".join(self.transaction_history))
             return True
@@ -91,10 +107,11 @@ class Bank:
         self.accounts = []
 
     def create_account(self, account_number, first_name, last_name, initial_balance):
-        initial_balance = round(float(initial_balance), 2)
+        # Create a new account and add it to the list of accounts
+        initial_balance = round(float(initial_balance), 2)  # Round the initial balance to 2 decimal places
         account_holder_name = f"{first_name} {last_name}"
         account = Account(account_number, account_holder_name, initial_balance)
-        self.accounts.append(account)
+        self.accounts.append(account)  # Add the account to the list of accounts
         print("Account created successfully.")
 
     def perform_transaction(self, account_number, amount, transaction_type):
@@ -206,31 +223,38 @@ def display_menu():
 def handle_user_input(option):
     # Handle user input and call appropriate methods
     if option == "1":
+        # Prompt the user to enter an account number
         account_number = input("Enter account number: ")
+        
+        # Validate the account number format
         while True:
             if not is_valid_account_number(account_number):
                 print("Invalid account number. Account number should be 8 digits.")
                 account_number = input("Enter account number: ")
                 continue
 
+            # Check if the account number already exists in the bank        
             if bank.find_account(account_number) is not None:
                 print("Account number already exists. Please choose a different account number.")
                 account_number = input("Enter account number: ")
                 continue
             break
 
+        # Prompt the user to enter the first name        
         first_name = ""
         while not first_name.strip():
             first_name = input("Enter first name: ")
             if not first_name.strip():
                 print("First name cannot be empty.")
 
+        # Prompt the user to enter the last name
         last_name = ""
         while not last_name.strip():
             last_name = input("Enter last name: ")
             if not last_name.strip():
                 print("Last name cannot be empty.")
 
+        # Prompt the user to enter the initial balance
         while True:
             try:
                 initial_balance = float(input("Enter initial balance: "))
@@ -245,22 +269,28 @@ def handle_user_input(option):
         bank.create_account(account_number, first_name, last_name, initial_balance)
 
     elif option == "2":
+        # Prompt the user to enter an account number
         account_number = input("Enter account number: ")
+        
+        # Validate the account number format
         while not is_valid_account_number(account_number):
             print("Invalid account number. Account number should be 8 digits.")
             account_number = input("Enter account number: ")
 
+        # Find the account with the provided account number
         account = bank.find_account(account_number)
         while account is None:
             print("Account not found. Please enter a valid account number.")
             account_number = input("Enter account number: ")
             account = bank.find_account(account_number)
 
+        # Prompt the user to enter the transaction type (deposit/withdrawal)
         transaction_type = input("Enter transaction type (deposit/withdrawal): ").lower()
         while transaction_type not in ["deposit", "withdrawal"]:
             print("Invalid transaction type. Please enter either 'deposit' or 'withdrawal'.")
             transaction_type = input("Enter transaction type (deposit/withdrawal): ").lower()
 
+        # Prompt the user to enter the transaction amount
         while True:
             try:
                 amount = float(input("Enter transaction amount: "))
@@ -274,6 +304,7 @@ def handle_user_input(option):
                 print("Invalid amount. Amount should be a valid number.")
 
         if transaction_type == "deposit":
+            # Perform a deposit on the account
             account.deposit(amount)
             print(f"Success! {locale.currency(amount, grouping=True, symbol=True)} deposited to:")
             print(f"Account Number: {account.account_number}")
@@ -281,6 +312,7 @@ def handle_user_input(option):
             print(f"Current Funds: {locale.currency(account.current_funds, grouping=True, symbol=True)}")
 
         elif transaction_type == "withdrawal":
+            # Perform a withdrawal from the account
             if amount <= account.current_funds:
                 account.withdraw(amount)
                 print(f"Success! {locale.currency(amount, grouping=True, symbol=True)} withdrawn from:")
@@ -291,9 +323,11 @@ def handle_user_input(option):
                 print("Insufficient funds. Withdrawal amount exceeds the current balance.")
 
     elif option == "3":
+        # Prompt the user to enter the sender's account number
         while True:
             sender_account_number = input("Enter sender account number: ")
             if is_valid_account_number(sender_account_number):
+                # Find the sender's account with the provided account number
                 sender_account = bank.find_account(sender_account_number)
                 if sender_account is not None:
                     break
@@ -302,9 +336,11 @@ def handle_user_input(option):
             else:
                 print("Invalid account number. Please try again.")
 
+        # Prompt the user to enter the recipient's account number
         while True:
             recipient_account_number = input("Enter recipient account number: ")
             if is_valid_account_number(recipient_account_number):
+                # Find the recipient's account with the provided account number
                 recipient_account = bank.find_account(recipient_account_number)
                 if recipient_account is not None:
                     break
@@ -313,6 +349,7 @@ def handle_user_input(option):
             else:
                 print("Invalid account number. Please try again.")
 
+        # Prompt the user to enter the transfer amount
         while True:
             while True:
                 try:
@@ -327,6 +364,7 @@ def handle_user_input(option):
                     print("Invalid amount. Amount should be a valid number.")
 
             if amount <= sender_account.current_funds:
+                # Perform the transfer by withdrawing from the sender's account and depositing to the recipient's account
                 sender_account.withdraw(amount)
                 recipient_account.deposit(amount)
                 print(f"Success! {locale.currency(amount, grouping=True, symbol=True)} transferred from:")
@@ -339,10 +377,12 @@ def handle_user_input(option):
             else:
                 print("Insufficient funds. Transfer amount exceeds the current balance of the sender account.")
 
-    elif user_option == "4":
+    elif option == "4":
+        # Prompt the user to enter an account number
         while True:
             account_number = input("Enter account number: ")
             if is_valid_account_number(account_number):
+                # Retrieve and display the account details with the provided account number
                 account_details = bank.display_account_details(account_number)
                 print(account_details)
                 break
@@ -350,12 +390,15 @@ def handle_user_input(option):
                 print("Invalid account number. Please try again.")
 
     elif option == "5":
+        # Prompt the user to enter an account number
         while True:
             account_number = input("Enter account number: ")
             if is_valid_account_number(account_number):
+                # Find the account with the provided account number
                 account = bank.find_account(account_number)
                 if account is not None:
                     print("\nTransaction History:")
+                    # Display each transaction in the account's transaction history
                     for transaction in account.transaction_history:
                         print(transaction)
                     break
@@ -379,12 +422,15 @@ def handle_user_input(option):
 
 # Main program
 if __name__ == "__main__":
+    # Create a Bank object
     bank = Bank()
+    # Load the account data from a file
     file_path = get_file_path("account_data.txt")
     accounts = load_data_from_file(file_path)
     bank.accounts = accounts
 
     while True:
+        # Display the menu
         display_menu()
-        user_option = input("Enter your choice (1-7): ")
-        handle_user_input(user_option)
+        option = input("Enter your choice (1-7): ")
+        handle_user_input(option)
